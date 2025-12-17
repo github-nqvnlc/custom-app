@@ -1,0 +1,91 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("Home") }}{% endblock %}
+
+{% block page_content %}
+<div class="hero-section">
+	<div class="container">
+		<div class="row">
+			<div class="col-12 text-center">
+				<h1 class="display-4">Welcome to CustomDemo</h1>
+				<p class="lead">This is your custom homepage</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="container mt-5">
+	<div class="row">
+	<div class="col-md-4 mb-4">
+		<a href="/feature1" class="text-decoration-none">
+			<div class="card card-clickable">
+				<div class="card-body">
+					<h5 class="card-title">New Doctype</h5>
+					<p class="card-text">This is Description.</p>
+				</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-md-4 mb-4">
+		<a href="/feature2" class="text-decoration-none">
+			<div class="card card-clickable">
+				<div class="card-body">
+					<h5 class="card-title">Feature 2</h5>
+					<p class="card-text">Description.</p>
+				</div>
+			</div>
+		</a>
+	</div>
+	<div class="col-md-4 mb-4">
+		<a href="/feature3" class="text-decoration-none">
+			<div class="card card-clickable">
+				<div class="card-body">
+					<h5 class="card-title">Feature 3</h5>
+					<p class="card-text">Description.</p>
+				</div>
+			</div>
+		</a>
+	</div>
+	</div>
+</div>
+
+<style>
+.hero-section {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 80px 0;
+	margin-bottom: 40px;
+}
+
+.hero-section h1 {
+	font-weight: 700;
+	margin-bottom: 20px;
+}
+
+.hero-section .lead {
+	font-size: 1.5rem;
+	opacity: 0.9;
+}
+
+.card {
+	border: none;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	transition: transform 0.3s ease;
+}
+
+.card-clickable {
+	cursor: pointer;
+	color: inherit;
+}
+
+.card-clickable:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card-clickable:hover .card-title {
+	color: #667eea;
+}
+</style>
+{% endblock %}
+
