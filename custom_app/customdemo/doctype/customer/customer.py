@@ -3,12 +3,28 @@ from frappe.model.document import Document
 
 
 class Customer(Document):
-	pass
+	def validate(self):
+		"""Chạy tự động khi save (cả Desk UI và API)"""
+		# kiểm tra mail,phone
+		if not self.email and not self.phone:
+			frappe.throw("Vui lòng nhập Email hoặc Phone")
+		
+		# fortmat email
+		if self.email and '@' not in self.email:
+			frappe.throw("Email không hợp lệ")
+	
+	def before_save(self):
+		"""Chạy trước khi save"""
+		pass
+	
+	def after_insert(self):
+		"""Chạy sau khi insert thành công"""
+		pass
 
 
 @frappe.whitelist(allow_guest=False)
 def get_customers():
-	"""Get list of customers"""
+	"""Get list customers"""
 	return frappe.get_all(
 		"Customer",
 		fields=["name", "customer_name", "email", "phone", "role", "address"],
