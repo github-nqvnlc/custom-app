@@ -63,7 +63,24 @@
 				<div class="col-md-7 mb-4">
 					<div class="card">
 						<div class="card-body">
-							<h5 class="card-title">Customer List</h5>
+							<h5 class="card-title d-flex justify-content-between align-items-center">
+								<span>Customer List</span>
+							</h5>
+
+							<div class="row mb-3">
+								<div class="col-md-7">
+									<input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Search by name, email, phone, address..." />
+								</div>
+								<div class="col-md-5 mt-2 mt-md-0">
+									<select id="filter-role" class="form-control form-control-sm">
+										<option value="">All roles</option>
+										<option value="Customer">Customer</option>
+										<option value="VIP">VIP</option>
+										<option value="Partner">Partner</option>
+									</select>
+								</div>
+							</div>
+
 							<div class="table-responsive">
 								<table class="table table-striped" id="customers-table">
 									<thead>
@@ -73,14 +90,16 @@
 											<th>Phone</th>
 											<th>Role</th>
 											<th>Address</th>
+											<th class="actions-header">Actions</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr>
-											<td colspan="5" class="text-muted text-center">Loading...</td>
+											<td colspan="6" class="text-muted text-center">Loading...</td>
 										</tr>
 									</tbody>
 								</table>
+								<div id="list-message" class="mt-2"></div>
 							</div>
 						</div>
 					</div>
@@ -91,14 +110,24 @@
 </div>
 
 <script>
-frappe.ready(function() {
-	const tableBody = document.querySelector('#customers-table tbody');
-	const form = document.getElementById('customer-form');
-	const msg = document.getElementById('form-message');
 
+// - Tạo mới Customer
+// - Hiển thị danh sách Customer + Edit/Delete + Filter 
+frappe.ready(function() {
+	const tableBody = document.querySelector('#customers-table tbody'); 
+	const form = document.getElementById('customer-form');
+	const msg = document.getElementById('form-message'); 
+	const listMsg = document.getElementById('list-message');
+	const filterSearch = document.getElementById('filter-search');
+	const filterRole = document.getElementById('filter-role'); 
+
+	// Lưu toàn bộ danh sách customers lấy từ server để filter trên client
+	let allCustomers = [];
+
+	// Render các dòng trong bảng customers từ một mảng customers
 	function renderRows(customers) {
 		if (!customers || customers.length === 0) {
-			tableBody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">No customers yet.</td></tr>';
+			tableBody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No customers yet.</td></tr>';
 			return;
 		}
 
@@ -110,24 +139,104 @@ frappe.ready(function() {
 					<td>${c.email || ''}</td>
 					<td>${c.phone || ''}</td>
 					<td>${c.role || ''}</td>
-					<td>${c.address || ''}</td>
+					<td class="address-cell">${c.address || ''}</td>
+					<td class="actions-cell">
+						<button type="button" class="btn btn-sm btn-outline-primary btn-edit" data-name="${c.name}">Edit</button>
+						<button type="button" class="btn btn-sm btn-outline-danger btn-delete ml-1" data-name="${c.name}">Delete</button>
+					</td>
 				</tr>
 			`;
 		});
 		tableBody.innerHTML = html;
+
+		attachRowEvents();
 	}
 
+	//searcg theo keyword và role, sau đó gọi hàm renderRows
+	function applyFilters() {
+		let filtered = allCustomers.slice();
+
+		const keyword = (filterSearch.value || '').toLowerCase().trim();
+		const role = (filterRole.value || '').trim();
+
+		if (keyword) {
+			filtered = filtered.filter(c => {
+				const values = [
+					c.customer_name,
+					c.email,
+					c.phone,
+					c.address,
+				].map(v => (v || '').toLowerCase());
+
+				return values.some(v => v.includes(keyword));
+			});
+		}
+
+		if (role) {
+			filtered = filtered.filter(c => (c.role || '') === role);
+		}
+
+		renderRows(filtered);
+	}
+
+	// Gán event cho các button Edit/Delete sau khi chạy hàm renderRows
+	function attachRowEvents() {
+		const editButtons = document.querySelectorAll('#customers-table .btn-edit');
+		const deleteButtons = document.querySelectorAll('#customers-table .btn-delete');
+
+		editButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const name = this.getAttribute('data-name');
+				if (!name) return;
+				// edit customer
+				window.location.href = '/feature1_edit?name=' + encodeURIComponent(name);
+			});
+		});
+
+		deleteButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const name = this.getAttribute('data-name');
+				if (!name) return;
+
+				if (!confirm('Bạn có chắc chắn muốn xóa customer này không?')) {
+					return;
+				}
+
+				listMsg.innerHTML = '<div class="alert alert-info">Deleting...</div>';
+
+				frappe.call({
+					method: 'custom_app.customdemo.doctype.customer.customer.delete_customer',
+					args: { name },
+					callback: function(r) {
+						if (r.message && r.message.success) {
+							listMsg.innerHTML = '<div class="alert alert-success">Deleted successfully.</div>';
+							loadCustomers();
+						} else {
+							listMsg.innerHTML = '<div class="alert alert-danger">Failed to delete customer.</div>';
+						}
+					},
+					error: function() {
+						listMsg.innerHTML = '<div class="alert alert-danger">Error while deleting customer.</div>';
+					}
+				});
+			});
+		});
+	}
+
+	// Gọi API backend để lấy danh sách Customer mới nhất
 	function loadCustomers() {
 		frappe.call({
 			method: 'custom_app.customdemo.doctype.customer.customer.get_customers',
 			callback: function(r) {
 				if (r.message) {
-					renderRows(r.message);
+					allCustomers = r.message || [];
+					applyFilters();
 				}
 			}
 		});
 	}
 
+	// event submit form tạo mới Customer
 	form.addEventListener('submit', function(e) {
 		e.preventDefault();
 		msg.innerHTML = '';
@@ -163,6 +272,19 @@ frappe.ready(function() {
 		});
 	});
 
+	// Filter
+	if (filterSearch) {
+		filterSearch.addEventListener('input', function() {
+			applyFilters();
+		});
+	}
+
+	if (filterRole) {
+		filterRole.addEventListener('change', function() {
+			applyFilters();
+		});
+	}
+
 	loadCustomers();
 });
 </script>
@@ -175,6 +297,33 @@ frappe.ready(function() {
 
 .card-title {
 	margin-bottom: 1rem;
+}
+
+#customers-table {
+	width: 100%;
+	table-layout: auto;
+}
+
+#customers-table th,
+#customers-table td {
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+#customers-table .address-cell {
+	max-width: 160px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#customers-table .actions-header {
+	width: 1%;
+	white-space: nowrap;
+}
+
+#customers-table .actions-cell {
+	white-space: nowrap;
 }
 </style>
 {% endblock %}
