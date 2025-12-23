@@ -4,12 +4,12 @@
 
 1. [Tổng Quan](#tổng-quan)
 2. [Kiến Trúc Hệ Thống](#kiến-trúc-hệ-thống)
-3. [Luồng Khởi Động](#luồng-khởi-động)
-4. [Luồng Tạo Mới Customer](#luồng-tạo-mới-customer)
-5. [Luồng Xem Danh Sách Customer](#luồng-xem-danh-sách-customer)
-6. [Luồng Chỉnh Sửa Customer](#luồng-chỉnh-sửa-customer)
-7. [Luồng Xóa Customer](#luồng-xóa-customer)
-8. [Luồng Filter và Search](#luồng-filter-và-search)
+3. [Flow Khởi Động](#Flow-khởi-động)
+4. [Flow Tạo Mới Customer](#Flow-tạo-mới-customer)
+5. [Flow Xem Danh Sách Customer](#Flow-xem-danh-sách-customer)
+6. [Flow Chỉnh Sửa Customer](#Flow-chỉnh-sửa-customer)
+7. [Flow Xóa Customer](#Flow-xóa-customer)
+8. [Flow Filter và Search](#Flow-filter-và-search)
 9. [Backend API Flow](#backend-api-flow)
 10. [Frontend Component Flow](#frontend-component-flow)
 
@@ -64,7 +64,7 @@ custom_app/
 
 
 
-## Luồng Khởi Động
+## Flow Khởi Động
 
 ### Bước 1: User Truy Cập Trang
 
@@ -82,7 +82,7 @@ custom_app/
 {% endblock %}
 ```
 
-**Luồng:**
+**Flow:**
 1. Browser request → Frappe server
 2. Frappe load template `index.html` hoặc `vue_demo.html`
 3. Template render HTML với `<div id="vue-app"></div>`
@@ -106,7 +106,7 @@ frappe.ready(() => {
 });
 ```
 
-**Luồng:**
+**Flow:**
 1. Script `main.js` được load
 2. Import Vue và App component
 3. Tạo Vue app instance
@@ -143,7 +143,7 @@ initializeView() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. `App.vue` component mount
 2. Gọi `initializeView()` để xác định view hiện tại
 3. Kiểm tra URL path:
@@ -171,7 +171,7 @@ initializeView() {
 
 ---
 
-## Luồng Tạo Mới Customer
+## Flow Tạo Mới Customer
 
 ### Scenario: User Click "Doctype new customer" → Tạo Customer Mới
 
@@ -191,7 +191,7 @@ go(href) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. User click button "Doctype new customer"
 2. Trigger `@click="go('/feature1')"`
 3. `go()` method set `window.location.href = '/feature1'`
@@ -212,7 +212,7 @@ go(href) {
 {% endblock %}
 ```
 
-**Luồng:**
+**Flow:**
 1. Frappe detect route `/feature1` → load `www/feature1.html`
 2. Template render `<div id="vue-app"></div>`
 3. Load Vue app script
@@ -235,7 +235,7 @@ initializeView() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. `App.vue` detect path = `/feature1`
 2. Set `currentView = 'customer_list'`
 3. Template render `<CustomerList />` component
@@ -252,7 +252,7 @@ mounted() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. `CustomerList` component mount
 2. Tự động gọi `loadCustomers()` để load danh sách hiện có
 
@@ -288,14 +288,14 @@ def get_customers():
     )
 ```
 
-**Luồng Backend:**
+**Flow Backend:**
 1. Frontend gọi `frappe.call({method: 'get_customers'})`
 2. Frappe route request đến `customer.get_customers()`
 3. Backend execute `frappe.get_all()` → Query database
 4. SQL: `SELECT name, customer_name, email, phone, role, address FROM tabCustomer ORDER BY modified DESC LIMIT 50`
 5. Return JSON array về frontend
 
-**Luồng Frontend:**
+**Flow Frontend:**
 1. Receive response → `r.message` = array of customers
 2. Update `this.allCustomers = r.message`
 3. Computed property `filteredCustomers` tự động update
@@ -319,7 +319,7 @@ def get_customers():
 </form>
 ```
 
-**Luồng:**
+**Flow:**
 1. User điền form (v-model bind data vào `this.form`)
 2. Click "Save" → Trigger `@submit.prevent="handleSubmit"`
 3. `prevent` ngăn form submit mặc định
@@ -362,7 +362,7 @@ async handleSubmit() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Validate `customer_name` required
 2. Nếu invalid → Show error message → Return
 3. Nếu valid → Prepare payload object
@@ -398,7 +398,7 @@ def create_customer(customer_name, email=None, phone=None, role=None, address=No
     return {"success": True, "name": doc.name}
 ```
 
-**Luồng Chi Tiết:**
+**Flow Chi Tiết:**
 
 **a) Tạo Document Object:**
 ```python
@@ -417,7 +417,7 @@ doc = frappe.get_doc({
 doc.insert()
 ```
 
-**Luồng trong `insert()`:**
+**Flow trong `insert()`:**
 1. Frappe tự động gọi `Customer.validate()`
 2. `validate()` check:
    ```python
@@ -466,7 +466,7 @@ if (r && r.message && r.message.success) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Receive response từ backend
 2. Check `r.message.success === true`
 3. Nếu success:
@@ -486,7 +486,7 @@ if (r && r.message && r.message.success) {
 this.loadCustomers();
 ```
 
-**Luồng:**
+**Flow:**
 1. Gọi lại `loadCustomers()`
 2. Call API `get_customers()`
 3. Backend query database → Return danh sách mới (bao gồm customer vừa tạo)
@@ -495,11 +495,11 @@ this.loadCustomers();
 
 ---
 
-## Luồng Xem Danh Sách Customer
+## Flow Xem Danh Sách Customer
 
 ### Scenario: User vào trang `/feature1` để xem danh sách
 
-### Bước 1-3: Giống như "Luồng Tạo Mới" (Navigation → Mount → Load)
+### Bước 1-3: Giống như "Flow Tạo Mới" (Navigation → Mount → Load)
 
 ### Bước 4: Render Table với Data
 
@@ -527,7 +527,7 @@ this.loadCustomers();
 </tbody>
 ```
 
-**Luồng:**
+**Flow:**
 1. Component render template
 2. Check `loading`:
    - `true` → Show "Loading..."
@@ -554,7 +554,7 @@ computed: {
 
 ---
 
-## Luồng Chỉnh Sửa Customer
+## Flow Chỉnh Sửa Customer
 
 ### Scenario: User Click "Edit" → Chỉnh sửa Customer
 
@@ -568,7 +568,7 @@ handleEdit(name) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. User click "Edit" button
 2. Trigger `@click="handleEdit(customer.name)"`
 3. `customer.name` = "CUST-00001" (docname)
@@ -586,7 +586,7 @@ handleEdit(name) {
 {% endblock %}
 ```
 
-**Luồng:**
+**Flow:**
 1. Browser navigate → Frappe load `www/feature1_edit.html`
 2. Vue app mount
 3. `App.vue` detect route
@@ -613,7 +613,7 @@ initializeView() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Detect path = `/feature1_edit`
 2. Extract query parameter `name` = "CUST-00001"
 3. Set `editCustomerName = "CUST-00001"`
@@ -644,7 +644,7 @@ mounted() {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Component nhận prop `customerName = "CUST-00001"`
 2. Check prop có giá trị
 3. Nếu không có → Redirect về `/feature1`
@@ -689,13 +689,13 @@ def get_customer(name: str):
     return doc.as_dict()
 ```
 
-**Luồng Backend:**
+**Flow Backend:**
 1. Frontend gọi `get_customer(name="CUST-00001")`
 2. Backend: `frappe.get_doc("Customer", "CUST-00001")`
 3. SQL: `SELECT * FROM tabCustomer WHERE name = 'CUST-00001'`
 4. Return document as dictionary
 
-**Luồng Frontend:**
+**Flow Frontend:**
 1. Receive customer data
 2. Populate form fields với data
 3. User có thể edit
@@ -768,7 +768,7 @@ def update_customer(name: str, customer_name=None, email=None, ...):
     return {"success": True, "name": doc.name}
 ```
 
-**Luồng:**
+**Flow:**
 1. Load document từ database
 2. Update các fields được truyền vào
 3. `doc.save()` → Tự động gọi `validate()`
@@ -791,7 +791,7 @@ if (r.message.success) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Show success message
 2. Đợi 1 giây
 3. Redirect về `/feature1`
@@ -799,7 +799,7 @@ if (r.message.success) {
 
 ---
 
-## Luồng Xóa Customer
+## Flow Xóa Customer
 
 ### Scenario: User Click "Delete" → Xóa Customer
 
@@ -831,7 +831,7 @@ async handleDelete(name) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. User click "Delete" button
 2. Show confirm dialog
 3. Nếu user cancel → Return (không làm gì)
@@ -853,7 +853,7 @@ def delete_customer(name: str):
     return {"success": True, "name": name}
 ```
 
-**Luồng:**
+**Flow:**
 1. `frappe.delete_doc("Customer", "CUST-00001")`
 2. SQL: `DELETE FROM tabCustomer WHERE name = 'CUST-00001'`
 3. Commit transaction
@@ -872,14 +872,14 @@ if (r.message.success) {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. Show success message
 2. Gọi `loadCustomers()` để reload danh sách
 3. Table tự động update (customer đã bị xóa không còn trong list)
 
 ---
 
-## Luồng Filter và Search
+## Flow Filter và Search
 
 ### Scenario: User Type vào Search Box hoặc Chọn Role Filter
 
@@ -900,7 +900,7 @@ if (r.message.success) {
 </select>
 ```
 
-**Luồng:**
+**Flow:**
 1. User type vào search box → `v-model` update `filterSearch`
 2. User chọn role → `v-model` update `filterRole`
 3. Vue reactive system detect change
@@ -943,7 +943,7 @@ computed: {
 }
 ```
 
-**Luồng:**
+**Flow:**
 1. `filterSearch` hoặc `filterRole` thay đổi
 2. Vue detect dependency change
 3. Tự động re-calculate `filteredCustomers()`
@@ -963,7 +963,7 @@ computed: {
 </tr>
 ```
 
-**Luồng:**
+**Flow:**
 1. `filteredCustomers` computed property return array mới
 2. Vue detect change
 3. `v-for` tự động re-render table rows
@@ -1077,7 +1077,7 @@ Re-render UI
 
 ---
 
-## Tóm Tắt Luồng Chính
+## Tóm Tắt Flow Chính
 
 ### 1. Khởi Động
 ```
