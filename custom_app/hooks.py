@@ -30,7 +30,7 @@ app_license = "mit"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/custom_app/css/custom_app.css"
-# web_include_js = "/assets/custom_app/js/custom_app.js"
+web_include_js = "/assets/custom_app/js/jquery_compat.js"
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "custom_app/public/scss/website"
